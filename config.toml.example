@@ -1,0 +1,11 @@
+[discord]
+app_id = 0123456789
+token = "YOUR_TOKEN_HERE"
+owners = [ 9876543210 ]
+
+[battle_net]
+token = "BNET_API_TOKEN_HERE"
+
+[condenser]
+server = "http://example.com"
+api_key = "CONDENSER_API_TOKEN_HERE"
