@@ -6,10 +6,12 @@ use serenity::framework::standard::StandardFramework;
 use serenity::client::bridge::gateway::ShardManager;
 use serenity::utils::Colour;
 
+mod help;
+mod unimplemented;
+
 use constants;
 use types::ConfigMarker;
-
-mod help;
+use self::unimplemented::UnimplementedCommand;
 
 static mut SHARD_MANAGER: Option<Arc<Mutex<ShardManager>>> = None;
 
@@ -50,8 +52,8 @@ pub fn attach_framework(client: &mut Client) {
                 Some("Striked out commands are not available to you here, but may be available elsewhere.".into())
             )
             // Tweak these two to compensate for the changes in our modified help function.
-            .no_help_available_text("No help available for that command.")
-            .command_not_found_text("Command `{}` does not exist.")
+            .no_help_available_text(":warning: No help available for that command.")
+            .command_not_found_text(":skull_crossbones: Command `{}` does not exist.")
             .embed_success_colour(Colour::orange())
         )
         // Command logger
@@ -64,27 +66,36 @@ pub fn attach_framework(client: &mut Client) {
         .bucket("ping", 0, 2, 10)
 
         // Add commands/groups below here
-        .group("Actions (Common Shortcuts)", |group| {
+        .group("Actions", |group| group
             // TODO: Attach non-prefixed commands e.g. `!shorten` here.
-            group
-        })
-        .group("Announcements Management", |group| group
+            .cmd("shorten", UnimplementedCommand::new())
+        )
+        .group("Announcements", |group| group
             .prefix("ann")
             // TODO: Attach anouncements commands here.
+            .cmd("join set", UnimplementedCommand::new())
+            .cmd("join del", UnimplementedCommand::new())
+            .cmd("stream set", UnimplementedCommand::new())
+            .cmd("stream del", UnimplementedCommand::new())
         )
-        .group("Battle.net/World of Warcraft", |group| group
-            .prefix("bnet")
-            // TODO: Attach Battle.net commands here.
-        )
-        .group("Condenser (URL Shortener)", |group| group
+        .group("Condenser", |group| group
             .prefix("condenser")
             // TODO: Attach Condenser commands here, except `!shorten` which is an Action.
+            .cmd("meta", UnimplementedCommand::new())
+            .cmd("del", UnimplementedCommand::new())
         )
-        .group("Permission Management", |group| group
+        .group("Permissions", |group| group
             .prefix("perm")
             // TODO: Attach permission management commands here.
+            .cmd("set", UnimplementedCommand::new())
         )
-        .group("Utilities (Admin Toolbox)", |mut group| { // Basic utilities. Not worth splitting out into command modules alone.
+        .group("World of Warcraft", |group| group
+            .prefix("wow")
+            // TODO: Attach Battle.net commands here.
+            .cmd("showme", UnimplementedCommand::new())
+            .cmd("census", UnimplementedCommand::new())
+        )
+        .group("Utilities", |mut group| { // Basic utilities. Not worth splitting out into command modules alone.
             group = group
                 .command("ping", |c| c
                     .desc("Are you still there?")
