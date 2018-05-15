@@ -27,7 +27,7 @@ lazy_static! {
 fn main() {
     let matches = App::new("Drakonid")
         .version(crate_version!())
-        .author("Arkan <arkan@drakon.io>")
+        .author("Robert T. <arkan@drakon.io>")
         .about("Discord bot for stuff and things.")
         .arg(
             Arg::with_name("config")
@@ -44,18 +44,23 @@ fn main() {
             Arg::with_name("v")
                 .short("v")
                 .multiple(true)
-                .help("Sets verbosity. May be specified up to 4 times.")
+                .help("Sets verbosity. May be specified up to 3 times.")
                 .global(true),
+        )
+        .arg(
+            Arg::with_name("is_wrapped")
+                .long("is_wrapped")
+                .help("Pass this flag to tell Drakonid that it has a update-capable wrapper, enabling `!update`.")
+                .global(true)
         )
         .get_matches();
 
     let conf_loc = matches.value_of("config").unwrap_or(DEFAULT_CONF_LOC);
     let log_lvl = match matches.occurrences_of("v") {
-        0 => log::LevelFilter::Error,
-        1 => log::LevelFilter::Warn,
-        2 => log::LevelFilter::Info,
-        3 => log::LevelFilter::Debug,
-        4 | _ => log::LevelFilter::Trace,
+        0 => log::LevelFilter::Warn,
+        1 => log::LevelFilter::Info,
+        2 => log::LevelFilter::Debug,
+        3 | _ => log::LevelFilter::Trace,
     };
 
     if let Err(err) = setup_logger(log_lvl) {
@@ -64,7 +69,7 @@ fn main() {
 
     info!(target: "main", "Logger configured; using log level {}", log_lvl);
 
-    drakonid::run(conf_loc);
+    drakonid::run(conf_loc, matches.occurrences_of("is_wrapped") != 0);
 }
 
 fn setup_logger(lvl: log::LevelFilter) -> Result<(), fern::InitError> {

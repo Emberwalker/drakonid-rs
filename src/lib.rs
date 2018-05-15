@@ -31,6 +31,7 @@ use serenity::model::gateway::Ready;
 
 pub mod workers;
 pub mod types;
+pub mod constants;
 pub mod commands;
 
 const RESTART_SECONDS: u64 = 30;
@@ -43,13 +44,19 @@ impl EventHandler for Handler {
     }
 }
 
-pub fn run(conf_loc: &str) {
+pub fn run(conf_loc: &str, is_wrapped: bool) {
     let mut conf = config::Config::default();
     conf
-        .merge(config::File::with_name(conf_loc.trim_right_matches(".toml").trim_right_matches(".json")))
-        .expect("unable to load configuration");
+        .set_default(constants::CONF_IS_WRAPPED, false).unwrap()
+        .merge(config::File::with_name(conf_loc.trim_right_matches(".toml").trim_right_matches(".json")).required(true))
+        .expect("unable to load configuration")
+        .merge(config::Environment::with_prefix("drakonid")).unwrap();
+    
+    if is_wrapped {
+        conf.set(constants::CONF_IS_WRAPPED, true).unwrap();
+    }
 
-    let token = conf.get_str("discord.token").expect("No token specified in configuration.");
+    let token = conf.get_str(constants::CONF_DISCORD_TOKEN).expect("No token specified in configuration.");
     let mut client = Client::new(&token, Handler).expect("Serenity client init failed.");
     
     // Attach config to Serenity's shared data (which is exposed in Context structs later)

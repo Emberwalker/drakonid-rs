@@ -16,7 +16,10 @@
                 ]
             },
             "args": [],
-            "cwd": "${workspaceFolder}"
+            "cwd": "${workspaceFolder}",
+            "sourceLanguages": [
+                "rust"
+            ]
         },
         {
             "type": "lldb",
@@ -29,9 +32,12 @@
                 ]
             },
             "args": [
-                "-vvv"
+                "-vv"
             ],
-            "cwd": "${workspaceFolder}"
+            "cwd": "${workspaceFolder}",
+            "sourceLanguages": [
+                "rust"
+            ]
         },
         {
             "type": "lldb",
@@ -44,9 +50,12 @@
                 ]
             },
             "args": [
-                "-vvvv"
+                "-vvv"
             ],
-            "cwd": "${workspaceFolder}"
+            "cwd": "${workspaceFolder}",
+            "sourceLanguages": [
+                "rust"
+            ]
         }
     ]
 }
