@@ -2,12 +2,14 @@ use std::process;
 use std::sync::Arc;
 use serenity::prelude::*;
 use serenity::model::id::UserId;
-use serenity::framework::standard::{help_commands, StandardFramework};
+use serenity::framework::standard::StandardFramework;
 use serenity::client::bridge::gateway::ShardManager;
 use serenity::utils::Colour;
 
 use constants;
 use types::ConfigMarker;
+
+mod help;
 
 static mut SHARD_MANAGER: Option<Arc<Mutex<ShardManager>>> = None;
 
@@ -42,11 +44,14 @@ pub fn attach_framework(client: &mut Client) {
                         .map(|it| UserId(*it))
                         .collect())
         })
-        .customised_help(help_commands::with_embeds, |help| help
+        .customised_help(help::drakonid_help, |help| help
             .individual_command_tip("For help on a specific command, run `!help` followed by the command name.")
             .striked_commands_tip(
                 Some("Striked out commands are not available to you here, but may be available elsewhere.".into())
             )
+            // Tweak these two to compensate for the changes in our modified help function.
+            .no_help_available_text("No help available for that command.")
+            .command_not_found_text("Command `{}` does not exist.")
             .embed_success_colour(Colour::orange())
         )
         // Command logger
@@ -59,7 +64,27 @@ pub fn attach_framework(client: &mut Client) {
         .bucket("ping", 0, 2, 10)
 
         // Add commands/groups below here
-        .group("Utilities", |mut group| { // Basic utilities. Not worth splitting out into command modules alone.
+        .group("Actions (Common Shortcuts)", |group| {
+            // TODO: Attach non-prefixed commands e.g. `!shorten` here.
+            group
+        })
+        .group("Announcements Management", |group| group
+            .prefix("ann")
+            // TODO: Attach anouncements commands here.
+        )
+        .group("Battle.net/World of Warcraft", |group| group
+            .prefix("bnet")
+            // TODO: Attach Battle.net commands here.
+        )
+        .group("Condenser (URL Shortener)", |group| group
+            .prefix("condenser")
+            // TODO: Attach Condenser commands here, except `!shorten` which is an Action.
+        )
+        .group("Permission Management", |group| group
+            .prefix("perm")
+            // TODO: Attach permission management commands here.
+        )
+        .group("Utilities (Admin Toolbox)", |mut group| { // Basic utilities. Not worth splitting out into command modules alone.
             group = group
                 .command("ping", |c| c
                     .desc("Are you still there?")
@@ -98,7 +123,9 @@ pub fn attach_framework(client: &mut Client) {
                     .desc("Triggers a bot update. Only works if the bot is run from a wrapper script and not inside a \
                           Docker container.")
                     .owners_only(true)
-                    .exec(|_, msg, _| {
+                    .exec(|ctx, msg, _| {
+                        // See `!stop` for why we do this.
+                        ctx.invisible();
                         warn!("Going down for update...");
                         let _ = msg.channel_id.say(format!("{} Shutting down for update.", msg.author.mention()));
                         shutdown_bot();
