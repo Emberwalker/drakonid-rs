@@ -12,7 +12,8 @@ extern crate drakonid;
 
 use clap::{App, Arg};
 use regex::Regex;
-use std::cmp;
+use std::{cmp, thread};
+use std::hash::{Hash, Hasher};
 
 static CONF_LOC_ENV: &'static str = "DRAKONID_CONF";
 static DEFAULT_CONF_LOC: &'static str = "./config";
@@ -72,6 +73,33 @@ fn main() {
     drakonid::run(conf_loc, matches.occurrences_of("is_wrapped") != 0);
 }
 
+// We use this fake hasher to get raw thread IDs.
+struct DummyHasher(pub u64);
+
+impl Hasher for DummyHasher {
+    fn write_u64(&mut self, i: u64) {
+        self.0 = i;
+    }
+
+    fn write(&mut self, _: &[u8]) {} // NOOP
+
+    fn finish(&self) -> u64 {
+        self.0
+    }
+}
+
+fn get_thread() -> String {
+    let id = {
+        let mut h = DummyHasher(0);
+        thread::current().id().hash(&mut h);
+        format!("{}", h.finish())
+    };
+
+    let name: String = thread::current().name().unwrap_or_else(|| "<unnamed>").into();
+
+    format!("{}/{}", id, name)
+}
+
 fn setup_logger(lvl: log::LevelFilter) -> Result<(), fern::InitError> {
     let noisy_crate_lvl = cmp::min(log::LevelFilter::Warn, lvl); // For VERY noisy crates
     let verbose_crate_lvl = cmp::min(log::LevelFilter::Info, lvl); // For somewhat noisy crates
@@ -79,8 +107,9 @@ fn setup_logger(lvl: log::LevelFilter) -> Result<(), fern::InitError> {
         .format(|out, message, record| {
             if record.target().starts_with("drakonid") || record.target().starts_with("main") {
                 out.finish(format_args!(
-                    "[{}][{}][{}][{}:{}] {}",
+                    "[{}][{}][{}][{}][{}:{}] {}",
                     chrono::Utc::now().format("%Y/%m/%d %H:%M:%S%.3f%z"),
+                    get_thread(),
                     record.level(),
                     record.target(),
                     record.file().unwrap_or("<unknown>"),
@@ -94,8 +123,9 @@ fn setup_logger(lvl: log::LevelFilter) -> Result<(), fern::InitError> {
                 // We drop the file info for dependencies, since their file paths are long and absolute.
                 // Also strip any ANSI sequences, in case anything odd gets logged.
                 out.finish(format_args!(
-                    "[{}][{}][{}][<elided>:???] {}",
+                    "[{}][{}][{}][{}][<elided>:???] {}",
                     chrono::Utc::now().format("%Y/%m/%d %H:%M:%S%.3f%z"),
+                    get_thread(),
                     record.level(),
                     record.target(),
                     STRIP_ANSI_RE.replace_all(&format!("{}", message), "")

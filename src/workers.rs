@@ -31,6 +31,8 @@ impl ThreadPoolProvider {
 }
 
 #[inline]
-pub fn run_on_worker<T: FnOnce(&threadpool::ThreadPool) -> ()>(thunk: T) {
-    THREAD_POOL_INST.with(thunk);
+pub fn run_on_worker<T: 'static + FnOnce() -> () + Send>(thunk: T) {
+    THREAD_POOL_INST.with(move |pool| {
+        pool.execute(thunk);
+    });
 }

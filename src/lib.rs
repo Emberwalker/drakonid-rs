@@ -1,10 +1,13 @@
 #![cfg_attr(feature = "clippy", feature(plugin))]
 #![cfg_attr(feature = "clippy", plugin(clippy))]
+#![feature(extern_prelude)]
 #![allow(unknown_lints)]
 #![warn(clippy)]
 
 extern crate config;
 extern crate chrono;
+#[macro_use]
+extern crate hyper;
 #[macro_use]
 extern crate lazy_static;
 #[macro_use]
@@ -21,6 +24,7 @@ extern crate serenity;
 extern crate threadpool;
 extern crate typemap;
 extern crate url;
+extern crate url_serde;
 
 use std::{time, thread};
 use std::sync::Arc;
@@ -32,6 +36,7 @@ use serenity::model::gateway::Ready;
 pub mod workers;
 pub mod types;
 pub mod constants;
+pub mod msg_utils;
 pub mod commands;
 
 const RESTART_SECONDS: u64 = 30;

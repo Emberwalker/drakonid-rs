@@ -9,3 +9,6 @@ pub const CONF_BNET_TOKEN: &str = "battlenet.token";
 
 pub const CONF_CONDENSER_SRV: &str = "condenser.server";
 pub const CONF_CONDENSER_KEY: &str = "condenser.key";
+
+// Metadata
+pub const USER_AGENT: &str = concat!("drakonid-rs/", env!("CARGO_PKG_VERSION"));

@@ -8,6 +8,7 @@ publish = false
 chrono = "0.4"
 config = "0.8"
 clap = "2.31"
+hyper = "0.11" # Update this in lockstep with reqwest
 log = "0.4"
 fern = "0.5"
 fst = "0.3"
@@ -26,6 +27,7 @@ serenity = { version = "0.5", features = [
 threadpool = "1.7"
 typemap = "0.3"
 url = "1.7"
+url_serde = "0.2"
 
 # TODO: Remove this once RLS + Clippy has stabilised (and has support in VSCode)
 clippy = { version = "*", optional = true }

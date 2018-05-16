@@ -8,6 +8,7 @@ use serenity::utils::Colour;
 
 mod help;
 mod unimplemented;
+mod condenser;
 
 use constants;
 use types::ConfigMarker;
@@ -66,10 +67,12 @@ pub fn attach_framework(client: &mut Client) {
         .bucket("ping", 0, 2, 10)
 
         // Add commands/groups below here
-        .group("Actions", |group| group
-            // TODO: Attach non-prefixed commands e.g. `!shorten` here.
-            .cmd("shorten", UnimplementedCommand::new())
-        )
+        .group("Actions", |mut group| {
+            if let Some(shorten) = condenser::CondenserShorten::new(Arc::clone(&cdata)) {
+                group = group.cmd("shorten", shorten);
+            }
+            group
+        })
         .group("Announcements", |group| group
             .prefix("ann")
             // TODO: Attach anouncements commands here.
@@ -101,7 +104,7 @@ pub fn attach_framework(client: &mut Client) {
                     .desc("Are you still there?")
                     .bucket("ping")
                     .exec(|_ctx, msg, _args| {
-                        let _ = msg.channel_id.say(format!("{} Pong!", msg.author.mention()));
+                        let _ = msg.reply("Pong!");
                         Ok(())
                     })
                 )
@@ -114,7 +117,7 @@ pub fn attach_framework(client: &mut Client) {
                         // We reset this in the Ready event, when the bot boots up again.
                         ctx.invisible();
                         warn!("Shutdown started by {}", msg.author.tag());
-                        let _ = msg.channel_id.say(format!("{} Shutting down.", msg.author.mention()));
+                        let _ = msg.reply("Shutting down.");
 
                         shutdown_bot();
 
@@ -138,7 +141,7 @@ pub fn attach_framework(client: &mut Client) {
                         // See `!stop` for why we do this.
                         ctx.invisible();
                         warn!("Going down for update...");
-                        let _ = msg.channel_id.say(format!("{} Shutting down for update.", msg.author.mention()));
+                        let _ = msg.reply("Shutting down for update.");
                         shutdown_bot();
                         process::exit(-100);
                     })
