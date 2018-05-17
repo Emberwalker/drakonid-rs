@@ -1,9 +1,10 @@
 use std::sync::Arc;
+use std::time::Duration;
 
 use chrono::DateTime;
 use chrono::offset::FixedOffset;
 use reqwest::{Client, StatusCode};
-use reqwest::header::UserAgent;
+use reqwest::header::{Headers, UserAgent};
 use serenity::prelude::{Context, Mutex, Mentionable};
 use serenity::framework::standard::{Args, Command, CommandError, CommandOptions};
 use serenity::model::channel::Message;
@@ -11,10 +12,23 @@ use serenity::utils::Colour;
 use typemap::ShareMap;
 use url::Url;
 
-use constants::{CONF_CONDENSER_KEY, CONF_CONDENSER_SRV, USER_AGENT};
+use constants::*;
 use msg_utils::{error_embed, usage_error_embed};
 use types::ConfigMarker;
 use workers::run_on_worker;
+
+thread_local! {
+    // Per-thread instance Reqwest's client.
+    static REQWEST_CLIENT: Client = {
+        let mut headers = Headers::new();
+        headers.set(UserAgent::new(USER_AGENT));
+        Client::builder()
+            .default_headers(headers)
+            .timeout(Some(Duration::from_secs(10)))
+            .build()
+            .expect("Reqwest client init")
+    };
+}
 
 header!{ (XApiKey, "X-API-Key") => [String] }
 
@@ -64,7 +78,7 @@ pub struct CondenserShorten {
 }
 
 impl CondenserShorten {
-    pub fn new(client_data: Arc<Mutex<ShareMap>>) -> Option<CondenserShorten> {
+    pub fn new(client_data: &Arc<Mutex<ShareMap>>) -> Option<CondenserShorten> {
         // Get configuration out of client data.
         let conf_res = || -> Result<_, ()> {
             let conf_lock = client_data.lock();
@@ -145,13 +159,14 @@ impl Command for CondenserShorten {
         
         // Hand off to the worker thread pool.
         run_on_worker(move || {
-            let client = Client::new();
-            let response_result = client
+            //let client = Client::new();
+            let response_result = REQWEST_CLIENT.with(|client| { client
                 .post(server_url)
                 .header(UserAgent::new(USER_AGENT))
                 .header(XApiKey(api_key))
                 .json(&request)
-                .send();
+                .send()
+            });
 
             let mut response = match response_result {
                 Ok(res) => res,
@@ -220,7 +235,7 @@ impl Command for CondenserShorten {
 
             let _ = channel_id.send_message(|m| m.content(usr_mention).embed(|e| e
                 .title("URL Shortened")
-                .colour(Colour::blitz_blue())
+                .colour(*COLOUR_CONDENSER)
                 .field("Short URL", parsed_response.into_string(), false)
                 .field("Original URL", request.url, false)
             ));

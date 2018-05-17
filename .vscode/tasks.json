@@ -8,6 +8,8 @@
             "label": "cargo build",
             "command": "cargo",
             "args": [
+                "--features",
+                "clippy",
                 "build"
             ],
             "problemMatcher": [

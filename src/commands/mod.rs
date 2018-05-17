@@ -68,7 +68,7 @@ pub fn attach_framework(client: &mut Client) {
 
         // Add commands/groups below here
         .group("Actions", |mut group| {
-            if let Some(shorten) = condenser::CondenserShorten::new(Arc::clone(&cdata)) {
+            if let Some(shorten) = condenser::CondenserShorten::new(&cdata) {
                 group = group.cmd("shorten", shorten);
             }
             group
