@@ -21,7 +21,9 @@ struct ThreadPoolProvider {
 
 impl ThreadPoolProvider {
     pub fn new(pool: threadpool::ThreadPool) -> Self {
-        ThreadPoolProvider { pool: Mutex::new(pool) }
+        ThreadPoolProvider {
+            pool: Mutex::new(pool),
+        }
     }
 
     fn handle(&self) -> threadpool::ThreadPool {

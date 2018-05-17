@@ -4,8 +4,8 @@
 #![allow(unknown_lints)]
 #![warn(clippy)]
 
-extern crate config;
 extern crate chrono;
+extern crate config;
 #[macro_use]
 extern crate hyper;
 #[macro_use]
@@ -26,18 +26,18 @@ extern crate typemap;
 extern crate url;
 extern crate url_serde;
 
-use std::{time, thread};
 use std::sync::Arc;
+use std::{thread, time};
 
+use serenity::model::gateway::Ready;
 use serenity::prelude::*;
 use serenity::Client;
-use serenity::model::gateway::Ready;
 
-pub mod workers;
-pub mod types;
+pub mod commands;
 pub mod constants;
 pub mod msg_utils;
-pub mod commands;
+pub mod types;
+pub mod workers;
 
 const RESTART_SECONDS: u64 = 30;
 
@@ -51,19 +51,27 @@ impl EventHandler for Handler {
 
 pub fn run(conf_loc: &str, is_wrapped: bool) {
     let mut conf = config::Config::default();
-    conf
-        .set_default(constants::CONF_IS_WRAPPED, false).unwrap()
-        .merge(config::File::with_name(conf_loc.trim_right_matches(".toml").trim_right_matches(".json")).required(true))
+    conf.set_default(constants::CONF_IS_WRAPPED, false)
+        .unwrap()
+        .merge(
+            config::File::with_name(
+                conf_loc
+                    .trim_right_matches(".toml")
+                    .trim_right_matches(".json"),
+            ).required(true),
+        )
         .expect("unable to load configuration")
-        .merge(config::Environment::with_prefix("drakonid")).unwrap();
-    
+        .merge(config::Environment::with_prefix("drakonid"))
+        .unwrap();
+
     if is_wrapped {
         conf.set(constants::CONF_IS_WRAPPED, true).unwrap();
     }
 
-    let token = conf.get_str(constants::CONF_DISCORD_TOKEN).expect("No token specified in configuration.");
+    let token = conf.get_str(constants::CONF_DISCORD_TOKEN)
+        .expect("No token specified in configuration.");
     let mut client = Client::new(&token, Handler).expect("Serenity client init failed.");
-    
+
     // Attach config to Serenity's shared data (which is exposed in Context structs later)
     debug!("Attaching configuration to Client/Context data.");
     {

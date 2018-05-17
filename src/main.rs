@@ -12,8 +12,8 @@ extern crate drakonid;
 
 use clap::{App, Arg};
 use regex::Regex;
-use std::{cmp, thread};
 use std::hash::{Hash, Hasher};
+use std::{cmp, thread};
 
 static CONF_LOC_ENV: &'static str = "DRAKONID_CONF";
 static DEFAULT_CONF_LOC: &'static str = "./config";
@@ -95,7 +95,10 @@ fn get_thread() -> String {
         format!("{}", h.finish())
     };
 
-    let name: String = thread::current().name().unwrap_or_else(|| "<unnamed>").into();
+    let name: String = thread::current()
+        .name()
+        .unwrap_or_else(|| "<unnamed>")
+        .into();
 
     format!("{}/{}", id, name)
 }

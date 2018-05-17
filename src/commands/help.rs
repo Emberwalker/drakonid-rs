@@ -1,26 +1,17 @@
 /// This file is mostly derived from Serenity's with_embed implementation, but with nitpicky formatting changes.
-
 use std::collections::HashMap;
 use std::fmt::Write;
 use std::hash::BuildHasher;
 use std::sync::Arc;
 
-use serenity::prelude::*;
-use serenity::framework::standard::{
-    has_correct_roles,
-    has_correct_permissions,
-    Args,
-    Command,
-    CommandError,
-    CommandGroup,
-    CommandOrAlias,
-    HelpBehaviour,
-    HelpFunction,
-    HelpOptions,
-};
 use serenity::framework::standard::help_commands::has_all_requirements;
+use serenity::framework::standard::{
+    has_correct_permissions, has_correct_roles, Args, Command, CommandError, CommandGroup,
+    CommandOrAlias, HelpBehaviour, HelpFunction, HelpOptions,
+};
 use serenity::model::channel::Message;
 use serenity::model::id::ChannelId;
+use serenity::prelude::*;
 use serenity::utils::Colour;
 
 // This makes sure we're always satisfying HelpFunction.
@@ -55,7 +46,7 @@ fn with_embeds<H: BuildHasher>(
     msg: &Message,
     help_options: &HelpOptions,
     groups: HashMap<String, Arc<CommandGroup>, H>,
-    args: &Args
+    args: &Args,
 ) -> Result<(), CommandError> {
     if !args.is_empty() {
         let name = args.full();
@@ -78,7 +69,7 @@ fn with_embeds<H: BuildHasher>(
                             } else {
                                 break;
                             }
-                        },
+                        }
                         CommandOrAlias::Alias(ref name) => {
                             let actual_command = &group.commands[name];
 
@@ -89,14 +80,15 @@ fn with_embeds<H: BuildHasher>(
                                     } else {
                                         break;
                                     }
-                                },
+                                }
 
                                 CommandOrAlias::Alias(ref name) => {
-                                    let _ = msg.channel_id.say(help_options.suggestion_text.replace("{}", name));
+                                    let _ = msg.channel_id
+                                        .say(help_options.suggestion_text.replace("{}", name));
                                     return Ok(());
-                                },
+                                }
                             }
-                        },
+                        }
                     }
                 }
             }
@@ -104,14 +96,19 @@ fn with_embeds<H: BuildHasher>(
             if let Some((command_name, command)) = found {
                 let command = command.options();
                 if !command.help_available {
-                    error_embed(&msg.channel_id, &help_options.no_help_available_text, help_options.embed_error_colour);
+                    error_embed(
+                        &msg.channel_id,
+                        &help_options.no_help_available_text,
+                        help_options.embed_error_colour,
+                    );
 
                     return Ok(());
                 }
 
                 let _ = msg.channel_id.send_message(|m| {
                     m.embed(|e| {
-                        let mut embed = e.colour(help_options.embed_success_colour).title(command_name);
+                        let mut embed = e.colour(help_options.embed_success_colour)
+                            .title(command_name);
 
                         if let Some(ref desc) = command.desc {
                             embed = embed.description(desc);
@@ -169,13 +166,14 @@ fn with_embeds<H: BuildHasher>(
             e = e.title("Command List");
 
             if let Some(ref striked_command_text) = help_options.striked_commands_tip {
-                e = e.colour(help_options.embed_success_colour).description(
-                    format!("{}\n{}", &help_options.individual_command_tip, striked_command_text),
-                );
+                e = e.colour(help_options.embed_success_colour)
+                    .description(format!(
+                        "{}\n{}",
+                        &help_options.individual_command_tip, striked_command_text
+                    ));
             } else {
-                e = e.colour(help_options.embed_success_colour).description(
-                    &help_options.individual_command_tip,
-                );
+                e = e.colour(help_options.embed_success_colour)
+                    .description(&help_options.individual_command_tip);
             }
 
             let mut group_names = groups.keys().collect::<Vec<_>>();
@@ -204,15 +202,14 @@ fn with_embeds<H: BuildHasher>(
                     let cmd = &commands[name];
                     let cmd = cmd.options();
 
-                    if !cmd.dm_only && !cmd.guild_only || cmd.dm_only && msg.is_private() || cmd.guild_only && !msg.is_private() {
-
+                    if !cmd.dm_only && !cmd.guild_only || cmd.dm_only && msg.is_private()
+                        || cmd.guild_only && !msg.is_private()
+                    {
                         if cmd.help_available && has_correct_permissions(&cmd, msg) {
-
                             if let Some(guild) = msg.guild() {
                                 let guild = guild.read();
 
                                 if let Some(member) = guild.members.get(&msg.author.id) {
-
                                     if has_correct_roles(&cmd, &guild, &member) {
                                         let _ = writeln!(desc, "`{}`", name);
                                         has_commands = true;
@@ -222,14 +219,14 @@ fn with_embeds<H: BuildHasher>(
                                                 let name = format!("~~`{}`~~", &name);
                                                 let _ = writeln!(desc, "{}", name);
                                                 has_commands = true;
-                                            },
-                                                HelpBehaviour::Nothing => {
+                                            }
+                                            HelpBehaviour::Nothing => {
                                                 let _ = writeln!(desc, "`{}`", name);
                                                 has_commands = true;
-                                            },
-                                                HelpBehaviour::Hide => {
+                                            }
+                                            HelpBehaviour::Hide => {
                                                 continue;
-                                            },
+                                            }
                                         }
                                     }
                                 }
@@ -243,14 +240,14 @@ fn with_embeds<H: BuildHasher>(
                                     let name = format!("~~`{}`~~", &name);
                                     let _ = writeln!(desc, "{}", name);
                                     has_commands = true;
-                                },
+                                }
                                 HelpBehaviour::Nothing => {
                                     let _ = writeln!(desc, "`{}`", name);
                                     has_commands = true;
-                                },
+                                }
                                 HelpBehaviour::Hide => {
                                     continue;
-                                },
+                                }
                             }
                         }
                     } else {
@@ -259,14 +256,14 @@ fn with_embeds<H: BuildHasher>(
                                 let name = format!("~~`{}`~~", &name);
                                 let _ = writeln!(desc, "{}", name);
                                 has_commands = true;
-                            },
+                            }
                             HelpBehaviour::Nothing => {
                                 let _ = writeln!(desc, "`{}`", name);
                                 has_commands = true;
-                            },
+                            }
                             HelpBehaviour::Hide => {
                                 continue;
-                            },
+                            }
                         }
                     }
                 }

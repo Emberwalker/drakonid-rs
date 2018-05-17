@@ -1,18 +1,18 @@
+use serenity::client::bridge::gateway::ShardManager;
+use serenity::framework::standard::StandardFramework;
+use serenity::model::id::UserId;
+use serenity::prelude::*;
+use serenity::utils::Colour;
 use std::process;
 use std::sync::Arc;
-use serenity::prelude::*;
-use serenity::model::id::UserId;
-use serenity::framework::standard::StandardFramework;
-use serenity::client::bridge::gateway::ShardManager;
-use serenity::utils::Colour;
 
+mod condenser;
 mod help;
 mod unimplemented;
-mod condenser;
 
+use self::unimplemented::UnimplementedCommand;
 use constants;
 use types::ConfigMarker;
-use self::unimplemented::UnimplementedCommand;
 
 static mut SHARD_MANAGER: Option<Arc<Mutex<ShardManager>>> = None;
 
@@ -36,7 +36,8 @@ pub fn attach_framework(client: &mut Client) {
         SHARD_MANAGER = Some(Arc::clone(&client.shard_manager));
     }
 
-    client.with_framework(StandardFramework::new()
+    client.with_framework(
+        StandardFramework::new()
         .configure(|framework_conf| { framework_conf
             .prefix("!")
             .depth(3) // Maximum command segments
@@ -149,5 +150,6 @@ pub fn attach_framework(client: &mut Client) {
             }
 
             group
-        }));
+        }),
+    );
 }
