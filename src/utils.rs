@@ -25,7 +25,7 @@ pub fn usage_error_embed(cmd_name: &str, err_text: &str, opts: Arc<CommandOption
 }
 
 pub fn error_embed<T: FnOnce(CreateEmbed) -> (CreateEmbed)>(
-    channel_id: ChannelId,
+    channel_id: &ChannelId,
     err_text: &str,
     mention_text: Option<&str>,
     embed_thunk: T,
@@ -37,4 +37,14 @@ pub fn error_embed<T: FnOnce(CreateEmbed) -> (CreateEmbed)>(
 
         m.embed(|e| embed_thunk(e.title("Error").description(err_text).colour(*COLOUR_ERROR)))
     });
+}
+
+/// Helper macro to make getting configuration references less messy.
+macro_rules! conf {
+    ($cdata:ident) => {{
+        let lock = $cdata.lock();
+        lock.get::<ConfigMarker>()
+            .expect("unable to load client config")
+            .clone()
+    }};
 }

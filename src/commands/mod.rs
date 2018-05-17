@@ -82,12 +82,13 @@ pub fn attach_framework(client: &mut Client) {
             .cmd("stream set", UnimplementedCommand::new())
             .cmd("stream del", UnimplementedCommand::new())
         )
-        .group("Condenser", |group| group
-            .prefix("condenser")
-            // TODO: Attach Condenser commands here, except `!shorten` which is an Action.
-            .cmd("meta", UnimplementedCommand::new())
-            .cmd("del", UnimplementedCommand::new())
-        )
+        .group("Condenser", |mut group| { 
+            group = group.prefix("condenser").cmd("del", UnimplementedCommand::new());
+            if let Some(meta) = condenser::CondenserMeta::new(&cdata) {
+                group = group.cmd("meta", meta);
+            }
+            group
+        })
         .group("Permissions", |group| group
             .prefix("perm")
             // TODO: Attach permission management commands here.

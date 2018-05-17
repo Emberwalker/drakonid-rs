@@ -33,9 +33,11 @@ use serenity::model::gateway::Ready;
 use serenity::prelude::*;
 use serenity::Client;
 
+#[macro_use]
+pub mod utils;
+
 pub mod commands;
 pub mod constants;
-pub mod msg_utils;
 pub mod types;
 pub mod workers;
 
