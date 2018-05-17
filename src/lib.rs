@@ -64,7 +64,7 @@ pub fn run(conf_loc: &str, is_wrapped: bool) {
                 conf_loc
                     .trim_right_matches(".toml")
                     .trim_right_matches(".json"),
-            ).required(true),
+            ),
         )
         .expect("unable to load configuration")
         .merge(config::Environment::with_prefix("drakonid"))
