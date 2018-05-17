@@ -14,6 +14,7 @@ fern = "0.5"
 fst = "0.3"
 fst-levenshtein = "0.2"
 lazy_static = "1.0"
+mashup = "0.1"
 parking_lot = { version = "0.5", features = [ "nightly" ] }
 rand = "0.4"
 regex = "1.0"

@@ -1,6 +1,7 @@
 #![cfg_attr(feature = "clippy", feature(plugin))]
 #![cfg_attr(feature = "clippy", plugin(clippy))]
 #![feature(extern_prelude)]
+#![recursion_limit = "128"] // Necessary for SVar generation via mashup
 #![allow(unknown_lints)]
 #![warn(clippy)]
 
@@ -12,6 +13,8 @@ extern crate hyper;
 extern crate lazy_static;
 #[macro_use]
 extern crate log;
+#[macro_use]
+extern crate mashup;
 extern crate parking_lot;
 extern crate rand;
 extern crate regex;
@@ -38,6 +41,7 @@ pub mod utils;
 
 pub mod commands;
 pub mod constants;
+pub mod server;
 pub mod types;
 pub mod workers;
 
