@@ -7,6 +7,7 @@
 
 extern crate chrono;
 extern crate config;
+extern crate fuzzy_match;
 #[macro_use]
 extern crate hyper;
 #[macro_use]

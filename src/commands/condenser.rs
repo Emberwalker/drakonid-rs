@@ -157,7 +157,7 @@ impl CondenserShorten {
         let conf_res = || -> Result<_, ()> {
             let conf = conf!(client_data);
             let key = conf.get_str(CONF_CONDENSER_KEY).map_err(|_| ())?;
-            let srv: String = conf.get_str(CONF_CONDENSER_SRV).map_err(|_| ())?;
+            let srv = conf.get_str(CONF_CONDENSER_SRV).map_err(|_| ())?;
             Ok((key, Url::parse(&srv).map_err(|_| ())?))
         };
 
@@ -342,7 +342,7 @@ impl CondenserMeta {
         // Get configuration out of client data.
         let conf_res = || -> Result<_, ()> {
             let conf = conf!(client_data);
-            let srv: String = conf.get_str(CONF_CONDENSER_SRV).map_err(|_| ())?;
+            let srv = conf.get_str(CONF_CONDENSER_SRV).map_err(|_| ())?;
             Ok(Url::parse(&srv).map_err(|_| ())?)
         };
 
@@ -459,6 +459,131 @@ impl Command for CondenserMeta {
                     }
 
                     e
+                })
+            });
+        });
+
+        Ok(())
+    }
+
+    fn options(&self) -> Arc<CommandOptions> {
+        Arc::clone(&self.opts)
+    }
+}
+
+pub struct CondenserDelete {
+    opts: Arc<CommandOptions>,
+    key: String,
+    server: Url,
+}
+
+impl CondenserDelete {
+    pub fn new(client_data: &Arc<Mutex<ShareMap>>) -> Option<CondenserDelete> {
+        // Get configuration out of client data.
+        let conf_res = || -> Result<_, ()> {
+            let conf = conf!(client_data);
+            let key = conf.get_str(CONF_CONDENSER_KEY).map_err(|_| ())?;
+            let srv = conf.get_str(CONF_CONDENSER_SRV).map_err(|_| ())?;
+            Ok((key, Url::parse(&srv).map_err(|_| ())?))
+        };
+
+        if let Ok((key, server)) = conf_res() {
+            let mut opts = CommandOptions::default();
+            opts.desc = Some(format!(
+                "Delete a shortcode on the Condenser service at {}",
+                server
+            ));
+            opts.usage = Some("CODE".into());
+            opts.example = Some("google".into());
+            opts.min_args = Some(1);
+            opts.max_args = Some(1);
+
+            Some(CondenserDelete {
+                opts: Arc::new(opts),
+                key,
+                server,
+            })
+        } else {
+            None
+        }
+    }
+}
+
+impl Command for CondenserDelete {
+    fn execute(
+        &self,
+        _ctx: &mut Context,
+        msg: &Message,
+        mut args: Args,
+    ) -> Result<(), CommandError> {
+        let code = match args.single::<String>() {
+            Ok(code) => code.to_uppercase(),
+            Err(_) => {
+                usage_error_embed(
+                    "condenser delete",
+                    "No code specified.",
+                    Arc::clone(&self.opts),
+                    msg,
+                );
+                return Ok(());
+            }
+        };
+
+        let request = DeleteRequest { code: code.clone() };
+
+        // Gather everything the closure will need here.
+        let usr_mention = msg.author.mention();
+        let channel_id = msg.channel_id;
+        let api_key = self.key.clone();
+        let mut server_url = self.server.clone();
+        server_url.set_path("/api/delete");
+
+        run_on_worker(move || {
+            let response_result = REQWEST_CLIENT.with(|client| {
+                client
+                    .post(server_url)
+                    .header(XApiKey(api_key))
+                    .json(&request)
+                    .send()
+            });
+
+            let mut response = match response_result {
+                Ok(res) => res,
+                Err(it) => {
+                    handle_response_err(it, channel_id, &usr_mention);
+                    return;
+                }
+            };
+
+            let parsed_response: DeleteResponse = match response.status() {
+                StatusCode::Ok => match response.json::<DeleteResponse>() {
+                    Ok(res) => res,
+                    Err(err) => {
+                        handle_parse_err(err, channel_id, &usr_mention);
+                        return;
+                    }
+                },
+                code => {
+                    handle_response_code(code, channel_id, &usr_mention);
+                    return;
+                }
+            };
+
+            if parsed_response.status == "noexist" {
+                error_embed(
+                    &channel_id,
+                    "Code does not exist.",
+                    Some(&usr_mention),
+                    |e| e.field("Code", code, false),
+                );
+                return;
+            }
+
+            let _ = channel_id.send_message(|m| {
+                m.content(usr_mention).embed(|e| {
+                    e.title("Code Deleted")
+                        .colour(*COLOUR_CONDENSER)
+                        .field("Code", code, false)
                 })
             });
         });

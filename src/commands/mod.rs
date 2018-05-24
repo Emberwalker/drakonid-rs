@@ -82,10 +82,13 @@ pub fn attach_framework(client: &mut Client) {
             .cmd("stream set", UnimplementedCommand::new())
             .cmd("stream del", UnimplementedCommand::new())
         )
-        .group("Condenser", |mut group| { 
-            group = group.prefix("condenser").cmd("del", UnimplementedCommand::new());
+        .group("Condenser", |mut group| {
+            group = group.prefix("condenser");
             if let Some(meta) = condenser::CondenserMeta::new(&cdata) {
                 group = group.cmd("meta", meta);
+            }
+            if let Some(rm) = condenser::CondenserDelete::new(&cdata) {
+                group = group.cmd("delete", rm);
             }
             group
         })
